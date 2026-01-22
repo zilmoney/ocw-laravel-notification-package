@@ -134,12 +134,14 @@ $attachmentUrl = $response['data']['file_url'];
 
 ### Mail Check (Create and Mail Check in One Step)
 
+> **Note:** To get your Bank Account ID, please contact [OnlineCheckWriter.com](https://onlinecheckwriter.com).
+
 ```php
 use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
 
 $mailCheck = OnlineCheckWriterMailCheck::create()
-    ->bankAccount('vA9MqkGWPgwveD7Ryob')
+    ->bankAccount('your-bank-account-id') // Get this from OnlineCheckWriter.com
     ->amount(984)
     ->memo('Payment for services')
     ->note('Internal reference: INV-1234')
@@ -161,7 +163,7 @@ Alternatively, you can use the `to()` method with an array:
 
 ```php
 $mailCheck = OnlineCheckWriterMailCheck::create()
-    ->bankAccount('vA9MqkGWPgwveD7Ryob')
+    ->bankAccount('your-bank-account-id')
     ->amount(984)
     ->memo('Payment for services')
     ->issueDate('2024-07-01')
@@ -206,7 +208,7 @@ $response = OnlineCheckWriter::send($mailCheck);
 
 | Method | Description |
 |--------|-------------|
-| `bankAccount($id)` | Set the bank account ID |
+| `bankAccount($id)` | Set the bank account ID (contact OnlineCheckWriter.com) |
 | `accountType($type)` | Set account type (default: 'bankaccount') |
 | `amount($amount)` | Set the check amount |
 | `memo($memo)` | Set the memo line (appears on check) |
