@@ -7,11 +7,9 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Str;
 use Zilmoney\OnlineCheckWriter\Exceptions\OnlineCheckWriterException;
-use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterCheck;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterDocumentMail;
-use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterLetter;
+use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMessage;
-use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterPostcard;
 
 class OnlineCheckWriterClient
 {
@@ -44,7 +42,7 @@ class OnlineCheckWriterClient
     }
 
     /**
-     * Send a message (check, letter, postcard, or document mail) via OnlineCheckWriter API.
+     * Send a message (document mail or mail check) via OnlineCheckWriter API.
      *
      * @throws OnlineCheckWriterException
      */
@@ -52,9 +50,7 @@ class OnlineCheckWriterClient
     {
         return match (true) {
             $message instanceof OnlineCheckWriterDocumentMail => $this->sendDocumentMail($message),
-            $message instanceof OnlineCheckWriterCheck => $this->sendCheck($message),
-            $message instanceof OnlineCheckWriterLetter => $this->sendLetter($message),
-            $message instanceof OnlineCheckWriterPostcard => $this->sendPostcard($message),
+            $message instanceof OnlineCheckWriterMailCheck => $this->sendMailCheck($message),
             default => throw new OnlineCheckWriterException('Unknown message type'),
         };
     }
@@ -131,6 +127,25 @@ class OnlineCheckWriterClient
     }
 
     /**
+     * Send a mail check via the API.
+     * This creates and mails a check in a single API call.
+     *
+     * @throws OnlineCheckWriterException
+     */
+    public function sendMailCheck(OnlineCheckWriterMailCheck $mailCheck): array
+    {
+        try {
+            $response = $this->client->post('quickpay/mailcheck', [
+                RequestOptions::JSON => $mailCheck->toArray(),
+            ]);
+
+            return json_decode($response->getBody()->getContents(), true);
+        } catch (GuzzleException $e) {
+            $this->handleGuzzleException($e, 'send mail check');
+        }
+    }
+
+    /**
      * Mail a PDF document.
      *
      * @throws OnlineCheckWriterException
@@ -145,60 +160,6 @@ class OnlineCheckWriterClient
             return json_decode($response->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $this->handleGuzzleException($e, 'mail PDF');
-        }
-    }
-
-    /**
-     * Send a check via the API.
-     *
-     * @throws OnlineCheckWriterException
-     */
-    public function sendCheck(OnlineCheckWriterCheck $check): array
-    {
-        try {
-            $response = $this->client->post('checks', [
-                RequestOptions::JSON => $check->toArray(),
-            ]);
-
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (GuzzleException $e) {
-            $this->handleGuzzleException($e, 'send check');
-        }
-    }
-
-    /**
-     * Send a letter via the API.
-     *
-     * @throws OnlineCheckWriterException
-     */
-    public function sendLetter(OnlineCheckWriterLetter $letter): array
-    {
-        try {
-            $response = $this->client->post('letters', [
-                RequestOptions::JSON => $letter->toArray(),
-            ]);
-
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (GuzzleException $e) {
-            $this->handleGuzzleException($e, 'send letter');
-        }
-    }
-
-    /**
-     * Send a postcard via the API.
-     *
-     * @throws OnlineCheckWriterException
-     */
-    public function sendPostcard(OnlineCheckWriterPostcard $postcard): array
-    {
-        try {
-            $response = $this->client->post('postcards', [
-                RequestOptions::JSON => $postcard->toArray(),
-            ]);
-
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (GuzzleException $e) {
-            $this->handleGuzzleException($e, 'send postcard');
         }
     }
 

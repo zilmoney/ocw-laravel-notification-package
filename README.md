@@ -132,6 +132,54 @@ $response = OnlineCheckWriter::uploadDocumentForMailing(
 $attachmentUrl = $response['data']['file_url'];
 ```
 
+### Mail Check (Create and Mail Check in One Step)
+
+```php
+use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
+use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
+
+$mailCheck = OnlineCheckWriterMailCheck::create()
+    ->bankAccount('vA9MqkGWPgwveD7Ryob')
+    ->amount(984)
+    ->memo('Payment for services')
+    ->note('Internal reference: INV-1234')
+    ->issueDate('2024-07-01')
+    ->name('John Myres')
+    ->company('Tyler Payment Technologist')
+    ->address1('5007 richmond rd')
+    ->city('Tyler')
+    ->state('TX')
+    ->zip('75701')
+    ->phone('9032457713')
+    ->email('support@onlinecheckwriter.com')
+    ->shippingType(1);
+
+$response = OnlineCheckWriter::send($mailCheck);
+```
+
+Alternatively, you can use the `to()` method with an array:
+
+```php
+$mailCheck = OnlineCheckWriterMailCheck::create()
+    ->bankAccount('vA9MqkGWPgwveD7Ryob')
+    ->amount(984)
+    ->memo('Payment for services')
+    ->issueDate('2024-07-01')
+    ->to([
+        'name' => 'John Myres',
+        'company' => 'Tyler Payment Technologist',
+        'address1' => '5007 richmond rd',
+        'city' => 'Tyler',
+        'state' => 'TX',
+        'zip' => '75701',
+        'phone' => '9032457713',
+        'email' => 'support@onlinecheckwriter.com',
+    ])
+    ->shippingType(1);
+
+$response = OnlineCheckWriter::send($mailCheck);
+```
+
 ## Available Methods
 
 ### OnlineCheckWriterDocumentMail
@@ -153,6 +201,28 @@ $attachmentUrl = $response['data']['file_url'];
 | `shippingType($id)` | Set shipping type (1=Standard, 2=Express, 3=Priority) |
 | `from($address)` | Set sender/return address array |
 | `to($address)` | Set recipient address array |
+
+### OnlineCheckWriterMailCheck
+
+| Method | Description |
+|--------|-------------|
+| `bankAccount($id)` | Set the bank account ID |
+| `accountType($type)` | Set account type (default: 'bankaccount') |
+| `amount($amount)` | Set the check amount |
+| `memo($memo)` | Set the memo line (appears on check) |
+| `note($note)` | Set internal note (not printed on check) |
+| `issueDate($date)` | Set issue date (YYYY-MM-DD format) |
+| `name($name)` | Set recipient name |
+| `company($company)` | Set recipient company |
+| `address1($address)` | Set recipient address line 1 |
+| `address2($address)` | Set recipient address line 2 |
+| `city($city)` | Set recipient city |
+| `state($state)` | Set recipient state |
+| `zip($zip)` | Set recipient zip code |
+| `phone($phone)` | Set recipient phone |
+| `email($email)` | Set recipient email |
+| `shippingType($id)` | Set shipping type (1=Standard, 2=Express, 3=Priority) |
+| `to($address)` | Set recipient address from array |
 
 ## Error Handling
 

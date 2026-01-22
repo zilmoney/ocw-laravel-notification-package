@@ -152,9 +152,6 @@ class OnlineCheckWriterDocumentMail extends OnlineCheckWriterMessage
      */
     public function to(array $address): static
     {
-        $this->recipient = $address;
-
-        // Also map to individual properties for API
         $this->name = $address['name'] ?? null;
         $this->company = $address['company'] ?? null;
         $this->address1 = $address['address1'] ?? $address['address_line_1'] ?? null;
@@ -190,14 +187,6 @@ class OnlineCheckWriterDocumentMail extends OnlineCheckWriterMessage
     public function getDocumentTitle(): ?string
     {
         return $this->documentTitle;
-    }
-
-    /**
-     * Get the sender array.
-     */
-    public function getSenderArray(): array
-    {
-        return $this->sender;
     }
 
     /**

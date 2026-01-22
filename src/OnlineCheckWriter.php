@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array send(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMessage $message)
  * @method static array sendDocumentMail(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterDocumentMail $documentMail)
- * @method static array sendCheck(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterCheck $check)
- * @method static array sendLetter(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterLetter $letter)
- * @method static array sendPostcard(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterPostcard $postcard)
+ * @method static array sendMailCheck(\Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck $mailCheck)
  * @method static array uploadDocumentForMailing(string $filePath, string $documentTitle = null, string $idempotencyKey = null)
  * @method static array mailPdf(array $data)
  * @method static array uploadDocument(string $filePath, string $fileName = null)

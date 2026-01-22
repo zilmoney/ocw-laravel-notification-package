@@ -6,6 +6,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Config;
 use Zilmoney\OnlineCheckWriter\Exceptions\OnlineCheckWriterException;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterDocumentMail;
+use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMessage;
 use Zilmoney\OnlineCheckWriter\OnlineCheckWriterClient;
 
@@ -25,23 +26,20 @@ class OnlineCheckWriterChannel
      */
     public function send(mixed $notifiable, Notification $notification): ?array
     {
-        /** @var OnlineCheckWriterMessage|null $message */
         $message = $notification->toOnlineCheckWriter($notifiable);
 
         if (!$message instanceof OnlineCheckWriterMessage) {
             return null;
         }
 
-        // If no recipient is set, try to get it from the notifiable
-        if (!$message->hasRecipient()) {
-            $recipient = $this->getRecipientFromNotifiable($notifiable);
-            if ($recipient) {
-                $message->to($recipient);
-            }
+        // Try to get recipient from the notifiable if the message supports it
+        $recipient = $this->getRecipientFromNotifiable($notifiable);
+        if ($recipient) {
+            $message->to($recipient);
         }
 
-        // Apply default sender if not set
-        if ($message instanceof OnlineCheckWriterDocumentMail && empty($message->getSenderArray())) {
+        // Apply default sender if this is a DocumentMail
+        if ($message instanceof OnlineCheckWriterDocumentMail) {
             $defaultSender = Config::get('onlinecheckwriter.default_sender', []);
             if (!empty($defaultSender)) {
                 $message->from($defaultSender);
