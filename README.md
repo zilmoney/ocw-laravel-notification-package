@@ -20,7 +20,7 @@ Add the repository to your `composer.json`:
 Then install the package:
 
 ```bash
-composer require zilmoney/onlinecheckwriter-notifications
+composer require laravel-notification-channels/onlinecheckwriter
 ```
 
 ## Configuration

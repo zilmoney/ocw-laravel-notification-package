@@ -5,7 +5,7 @@ This guide explains how to publish and maintain your package on GitHub and Packa
 ## Current Setup
 
 - **GitHub Repository**: https://github.com/zilmoney/ocw-laravel-notification-package.git
-- **Package Name**: `zilmoney/onlinecheckwriter-notifications`
+- **Package Name**: `laravel-notification-channels/onlinecheckwriter`
 - **Current Version**: 1.0.0
 
 ## Step 1: Push Changes to GitHub
@@ -132,7 +132,7 @@ This ensures Packagist automatically updates when you push new tags.
 Once published to Packagist, users can install your package:
 
 ```bash
-composer require zilmoney/onlinecheckwriter-notifications
+composer require laravel-notification-channels/onlinecheckwriter
 ```
 
 ## Best Practices
@@ -173,7 +173,7 @@ composer validate
 - Wait a few minutes for Packagist to sync
 
 ### Composer Install Fails
-- Verify package name matches exactly: `zilmoney/onlinecheckwriter-notifications`
+- Verify package name matches exactly: `laravel-notification-channels/onlinecheckwriter`
 - Check minimum stability in user's composer.json
 - Ensure all dependencies are available
 

@@ -1,5 +1,5 @@
 {
-    "name": "zilmoney/onlinecheckwriter-notifications",
+    "name": "laravel-notification-channels/onlinecheckwriter",
     "description": "OnlineCheckWriter notifications channel for Laravel",
     "keywords": [
         "laravel",
