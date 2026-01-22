@@ -141,7 +141,7 @@ use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
 
 $mailCheck = OnlineCheckWriterMailCheck::create()
-    ->bankAccount('your-bank-account-id') // Get this from OnlineCheckWriter.com
+    ->bankAccount('your-bank-account-id') // Contact OnlineCheckWriter.com
     ->amount(984)
     ->memo('Payment for services')
     ->note('Internal reference: INV-1234')
