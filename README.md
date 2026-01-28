@@ -1,23 +1,32 @@
-# OnlineCheckWriter Document Mailing for Laravel
+# OnlineCheckWriter Notifications Channel for Laravel
 
-A Laravel package for mailing PDF documents via the OnlineCheckWriter API.
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/laravel-notification-channels/onlinecheckwriter.svg?style=flat-square)](https://packagist.org/packages/laravel-notification-channels/onlinecheckwriter)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/laravel-notification-channels/onlinecheckwriter.svg?style=flat-square)](https://packagist.org/packages/laravel-notification-channels/onlinecheckwriter)
+
+This package makes it easy to send physical mail and checks using [OnlineCheckWriter](https://onlinecheckwriter.com) with Laravel Notifications.
+
+## Contents
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+    - [Sending Document Mail](#sending-document-mail)
+    - [Sending Checks](#sending-checks)
+    - [Using the Facade Directly](#using-the-facade-directly)
+- [Available Message Methods](#available-message-methods)
+- [Routing Notifications](#routing-notifications)
+- [Error Handling](#error-handling)
+- [Changelog](#changelog)
+- [Testing](#testing)
+- [Security](#security)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [License](#license)
 
 ## Installation
 
-Add the repository to your `composer.json`:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../../packages/onlinecheckwriter"
-        }
-    ]
-}
-```
-
-Then install the package:
+You can install the package via composer:
 
 ```bash
 composer require laravel-notification-channels/onlinecheckwriter
@@ -31,13 +40,13 @@ Publish the configuration file:
 php artisan vendor:publish --tag=onlinecheckwriter-config
 ```
 
-Add your OnlineCheckWriter API key to your `.env` file:
+Add your OnlineCheckWriter API credentials to your `.env` file:
 
 ```env
 ONLINECHECKWRITER_API_KEY=your-api-key
 ONLINECHECKWRITER_BASE_URL=https://api.onlinecheckwriter.com/api/v3
 
-# Default sender information
+# Default sender/return address
 ONLINECHECKWRITER_SENDER_NAME="Your Company Name"
 ONLINECHECKWRITER_SENDER_COMPANY="Your Company LLC"
 ONLINECHECKWRITER_SENDER_ADDRESS_1="123 Main Street"
@@ -45,144 +54,168 @@ ONLINECHECKWRITER_SENDER_CITY="New York"
 ONLINECHECKWRITER_SENDER_STATE="NY"
 ONLINECHECKWRITER_SENDER_ZIP="10001"
 ONLINECHECKWRITER_SENDER_PHONE="1234567890"
+
+# For check mailing (contact OnlineCheckWriter.com to get your Bank Account ID)
+ONLINECHECKWRITER_BANK_ACCOUNT_ID=your-bank-account-id
 ```
 
 ## Usage
 
-### Option 1: Upload File and Mail in One Step
+### Sending Document Mail
+
+You can use the channel in your notification class:
+
+```php
+use Illuminate\Notifications\Notification;
+use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterDocumentMail;
+
+class InvoiceNotification extends Notification
+{
+    public function via($notifiable): array
+    {
+        return ['onlinecheckwriter'];
+    }
+
+    public function toOnlineCheckWriter($notifiable): OnlineCheckWriterDocumentMail
+    {
+        return OnlineCheckWriterDocumentMail::create()
+            ->file('/path/to/invoice.pdf')
+            ->documentTitle('Invoice #1234')
+            ->name($notifiable->name)
+            ->company($notifiable->company)
+            ->address1($notifiable->address1)
+            ->city($notifiable->city)
+            ->state($notifiable->state)
+            ->zip($notifiable->zip)
+            ->shippingType(3); // 1=Standard, 2=Express, 3=Priority
+    }
+}
+```
+
+Then send the notification:
+
+```php
+$user->notify(new InvoiceNotification());
+```
+
+#### Using a Pre-uploaded Document URL
+
+```php
+public function toOnlineCheckWriter($notifiable): OnlineCheckWriterDocumentMail
+{
+    return OnlineCheckWriterDocumentMail::create()
+        ->attachmentUrl('https://your-storage.com/document.pdf')
+        ->documentTitle('Invoice #1234')
+        ->to([
+            'name' => $notifiable->name,
+            'company' => $notifiable->company,
+            'address1' => $notifiable->address1,
+            'city' => $notifiable->city,
+            'state' => $notifiable->state,
+            'zip' => $notifiable->zip,
+        ])
+        ->from([
+            'name' => 'Your Company',
+            'address1' => '123 Main St',
+            'city' => 'New York',
+            'state' => 'NY',
+            'zip' => '10001',
+        ]);
+}
+```
+
+### Sending Checks
+
+> **Note:** To get your Bank Account ID, please contact [OnlineCheckWriter.com](https://onlinecheckwriter.com).
+
+```php
+use Illuminate\Notifications\Notification;
+use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
+
+class PaymentNotification extends Notification
+{
+    public function __construct(
+        protected float $amount,
+        protected string $memo
+    ) {}
+
+    public function via($notifiable): array
+    {
+        return ['onlinecheckwriter'];
+    }
+
+    public function toOnlineCheckWriter($notifiable): OnlineCheckWriterMailCheck
+    {
+        return OnlineCheckWriterMailCheck::create()
+            ->bankAccount(config('onlinecheckwriter.default_bank_account_id'))
+            ->amount($this->amount)
+            ->memo($this->memo)
+            ->note('Internal reference: PAY-001')
+            ->issueDate(now()->format('Y-m-d'))
+            ->name($notifiable->name)
+            ->company($notifiable->company)
+            ->address1($notifiable->address1)
+            ->city($notifiable->city)
+            ->state($notifiable->state)
+            ->zip($notifiable->zip)
+            ->shippingType(1);
+    }
+}
+```
+
+Then send the notification:
+
+```php
+$vendor->notify(new PaymentNotification(500.00, 'Invoice #1234 Payment'));
+```
+
+### Using the Facade Directly
+
+You can also use the facade for direct API access:
 
 ```php
 use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
 use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterDocumentMail;
 
+// Upload and mail a document
 $mail = OnlineCheckWriterDocumentMail::create()
     ->file('/path/to/invoice.pdf')
     ->documentTitle('Invoice 1244')
-    ->name('New Payee')
-    ->company('Tyler Payment Technologist')
-    ->address1('5007 richmond rd')
+    ->name('John Doe')
+    ->company('ABC Corporation')
+    ->address1('5007 Richmond Rd')
     ->city('Tyler')
     ->state('TX')
     ->zip('75701')
-    ->phone('111111111')
-    ->email('support@onlinecheckwriter.com')
-    ->shippingType(3)
-    ->from([
-        'name' => 'David Abraham',
-        'company' => 'David LLC',
-        'address1' => '450 Sutter Street',
-        'city' => 'San Francisco',
-        'state' => 'CA',
-        'zip' => '94108',
-        'phone' => '987564128',
-    ]);
+    ->phone('1234567890')
+    ->email('john@example.com')
+    ->shippingType(3);
 
 $response = OnlineCheckWriter::send($mail);
-```
 
-### Option 2: Use Pre-uploaded Attachment URL
-
-```php
-$mail = OnlineCheckWriterDocumentMail::create()
-    ->attachmentUrl('https://your-s3-url.com/document.pdf')
-    ->documentTitle('Invoice 1244')
-    ->name('New Payee')
-    ->company('Tyler Payment Technologist')
-    ->address1('5007 richmond rd')
-    ->city('Tyler')
-    ->state('TX')
-    ->zip('75701')
-    ->phone('111111111')
-    ->email('support@onlinecheckwriter.com')
-    ->shippingType(3)
-    ->from([
-        'name' => 'David Abraham',
-        'company' => 'David LLC',
-        'address1' => '450 Sutter Street',
-        'city' => 'San Francisco',
-        'state' => 'CA',
-        'zip' => '94108',
-        'phone' => '987564128',
-    ]);
-
-$response = OnlineCheckWriter::send($mail);
-```
-
-### Upload Document Only
-
-```php
-use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
-
+// Upload document only
 $response = OnlineCheckWriter::uploadDocumentForMailing(
     '/path/to/document.pdf',
     'Document Title'
 );
-
-// Response structure:
-// {
-//     "success": true,
-//     "data": {
-//         "id": "mQaMdjZlmGzLxbW",
-//         "document_title": "Document Title",
-//         "file_url": "https://...",
-//         "count_page": 1
-//     }
-// }
-
 $attachmentUrl = $response['data']['file_url'];
+
+// Verify an address
+$response = OnlineCheckWriter::verifyAddress([
+    'address1' => '123 Main St',
+    'city' => 'New York',
+    'state' => 'NY',
+    'zip' => '10001',
+]);
+
+// Check status
+$response = OnlineCheckWriter::getStatus('documentmailing', 'item-id');
+
+// Cancel a pending item
+$response = OnlineCheckWriter::cancel('documentmailing', 'item-id');
 ```
 
-### Mail Check (Create and Mail Check in One Step)
-
-> **Note:** To get your Bank Account ID, please contact [OnlineCheckWriter.com](https://onlinecheckwriter.com).
-
-```php
-use Zilmoney\OnlineCheckWriter\OnlineCheckWriter;
-use Zilmoney\OnlineCheckWriter\Message\OnlineCheckWriterMailCheck;
-
-$mailCheck = OnlineCheckWriterMailCheck::create()
-    ->bankAccount('your-bank-account-id') // Contact OnlineCheckWriter.com
-    ->amount(984)
-    ->memo('Payment for services')
-    ->note('Internal reference: INV-1234')
-    ->issueDate('2024-07-01')
-    ->name('John Myres')
-    ->company('Tyler Payment Technologist')
-    ->address1('5007 richmond rd')
-    ->city('Tyler')
-    ->state('TX')
-    ->zip('75701')
-    ->phone('9032457713')
-    ->email('support@onlinecheckwriter.com')
-    ->shippingType(1);
-
-$response = OnlineCheckWriter::send($mailCheck);
-```
-
-Alternatively, you can use the `to()` method with an array:
-
-```php
-$mailCheck = OnlineCheckWriterMailCheck::create()
-    ->bankAccount('your-bank-account-id')
-    ->amount(984)
-    ->memo('Payment for services')
-    ->issueDate('2024-07-01')
-    ->to([
-        'name' => 'John Myres',
-        'company' => 'Tyler Payment Technologist',
-        'address1' => '5007 richmond rd',
-        'city' => 'Tyler',
-        'state' => 'TX',
-        'zip' => '75701',
-        'phone' => '9032457713',
-        'email' => 'support@onlinecheckwriter.com',
-    ])
-    ->shippingType(1);
-
-$response = OnlineCheckWriter::send($mailCheck);
-```
-
-## Available Methods
+## Available Message Methods
 
 ### OnlineCheckWriterDocumentMail
 
@@ -202,13 +235,13 @@ $response = OnlineCheckWriter::send($mailCheck);
 | `email($email)` | Set recipient email |
 | `shippingType($id)` | Set shipping type (1=Standard, 2=Express, 3=Priority) |
 | `from($address)` | Set sender/return address array |
-| `to($address)` | Set recipient address array |
+| `to($address)` | Set recipient address from array |
 
 ### OnlineCheckWriterMailCheck
 
 | Method | Description |
 |--------|-------------|
-| `bankAccount($id)` | Set the bank account ID (contact OnlineCheckWriter.com) |
+| `bankAccount($id)` | Set the bank account ID |
 | `accountType($type)` | Set account type (default: 'bankaccount') |
 | `amount($amount)` | Set the check amount |
 | `memo($memo)` | Set the memo line (appears on check) |
@@ -223,8 +256,40 @@ $response = OnlineCheckWriter::send($mailCheck);
 | `zip($zip)` | Set recipient zip code |
 | `phone($phone)` | Set recipient phone |
 | `email($email)` | Set recipient email |
-| `shippingType($id)` | Set shipping type (1=Standard, 2=Express, 3=Priority) |
+| `shippingType($id)` | Set shipping type |
 | `to($address)` | Set recipient address from array |
+
+## Routing Notifications
+
+You can customize how notifications are routed by defining a `routeNotificationForOnlineCheckWriter` method on your notifiable model:
+
+```php
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    public function routeNotificationForOnlineCheckWriter(): array
+    {
+        return [
+            'name' => $this->full_name,
+            'company' => $this->company_name,
+            'address1' => $this->street_address,
+            'address2' => $this->apartment_number,
+            'city' => $this->city,
+            'state' => $this->state,
+            'zip' => $this->postal_code,
+            'phone' => $this->phone_number,
+            'email' => $this->email,
+        ];
+    }
+}
+```
+
+Alternatively, the channel will automatically extract address information from these model attributes if they exist:
+- `address_line_1` or `address1`
+- `address_line_2` or `address2`
+- `city`, `state`, `zip` (or `postal_code`)
+- `name`, `company`, `phone`, `email`
 
 ## Error Handling
 
@@ -238,15 +303,40 @@ try {
         // Handle validation errors (422)
         $errors = $e->getResponse();
     } elseif ($e->isAuthenticationError()) {
-        // Handle auth errors (401)
+        // Handle authentication errors (401)
     } elseif ($e->isRateLimitError()) {
         // Handle rate limiting (429)
     }
 
-    logger()->error('OnlineCheckWriter error: ' . $e->getMessage());
+    logger()->error('OnlineCheckWriter error: ' . $e->getMessage(), [
+        'response' => $e->getResponse(),
+    ]);
 }
 ```
 
+## Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+
+## Testing
+
+```bash
+composer test
+```
+
+## Security
+
+If you discover any security related issues, please email developer@zilmoney.com instead of using the issue tracker.
+
+## Contributing
+
+Please see [CONTRIBUTING](https://github.com/laravel-notification-channels/.github/blob/main/CONTRIBUTING.md) for details.
+
+## Credits
+
+- [Zilmoney](https://github.com/zilmoney)
+- [All Contributors](../../contributors)
+
 ## License
 
-MIT License.
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
