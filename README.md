@@ -9,6 +9,9 @@ This package makes it easy to send physical mail and checks using [OnlineCheckWr
 ## Contents
 
 - [Installation](#installation)
+- [Setting Up Your API Key](#setting-up-your-api-key)
+    - [Sandbox Environment](#sandbox-environment)
+    - [Production Environment](#production-environment)
 - [Configuration](#configuration)
 - [Usage](#usage)
     - [Sending Document Mail](#sending-document-mail)
@@ -32,6 +35,52 @@ You can install the package via composer:
 composer require laravel-notification-channels/onlinecheckwriter
 ```
 
+## Setting Up Your API Key
+
+### Sandbox Environment
+
+Use the sandbox environment for testing and development.
+
+| Setting | Value |
+|---------|-------|
+| Base URL | `https://test.onlinecheckwriter.com/api/v3` |
+| Sign Up | [test.onlinecheckwriter.com](https://test.onlinecheckwriter.com) |
+
+**Setup Steps:**
+
+1. Sign up for a test account at [test.onlinecheckwriter.com](https://test.onlinecheckwriter.com) and get your API key
+2. If verification issues arise, contact customer support via live chat or email
+3. Configure your `.env` with the sandbox base URL:
+   ```env
+   ONLINECHECKWRITER_BASE_URL=https://test.onlinecheckwriter.com/api/v3
+   ```
+4. Add a test bank account using provided sample numbers
+5. Run a comprehensive test to confirm setup
+6. For optional ACH/Direct Deposit testing, contact support
+
+### Production Environment
+
+> **Important:** Before going live, contact the OnlineCheckWriter support team to enable the API in the production environment. Failure to do so will result in an "Access Denied" error.
+
+| Setting | Value |
+|---------|-------|
+| Base URL | `https://app.onlinecheckwriter.com/api/v3` |
+| Sign Up | [onlinecheckwriter.com](https://onlinecheckwriter.com) |
+
+**Setup Steps:**
+
+1. Contact support to activate Live API access
+2. Sign up for a Live account at [onlinecheckwriter.com](https://onlinecheckwriter.com) and get your API key
+3. If verification issues arise, contact customer support via live chat or email
+4. Configure your `.env` with the production base URL:
+   ```env
+   ONLINECHECKWRITER_BASE_URL=https://app.onlinecheckwriter.com/api/v3
+   ```
+5. Add your bank account
+6. Run a comprehensive test to confirm setup
+
+**Support Contact:** [support@onlinecheckwriter.com](mailto:support@onlinecheckwriter.com)
+
 ## Configuration
 
 Publish the configuration file:
@@ -44,7 +93,12 @@ Add your OnlineCheckWriter API credentials to your `.env` file:
 
 ```env
 ONLINECHECKWRITER_API_KEY=your-api-key
-ONLINECHECKWRITER_BASE_URL=https://api.onlinecheckwriter.com/api/v3
+
+# For Sandbox/Testing:
+ONLINECHECKWRITER_BASE_URL=https://test.onlinecheckwriter.com/api/v3
+
+# For Production (uncomment when ready):
+# ONLINECHECKWRITER_BASE_URL=https://app.onlinecheckwriter.com/api/v3
 
 # Default sender/return address
 ONLINECHECKWRITER_SENDER_NAME="Your Company Name"
